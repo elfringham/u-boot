@@ -1365,6 +1365,8 @@ static int ti_sci_cmd_clk_get_parent(const struct ti_sci_handle *handle,
 	if (ret)
 		return ret;
 
+	resp = xfer->tx_message.buf;
+
 	*parent_id = resp->parent_id;
 
 	return ret;
