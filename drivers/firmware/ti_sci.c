@@ -3084,17 +3084,24 @@ devm_ti_sci_get_of_resource(const struct ti_sci_handle *handle,
 		return ERR_PTR(sets);
 	}
 	temp = malloc(sets);
+	if (!temp)
+		return ERR_PTR(-ENOMEM);
+
 	sets /= sizeof(u32);
 	res->sets = sets;
 
 	res->desc = devm_kcalloc(dev, res->sets, sizeof(*res->desc),
 				 GFP_KERNEL);
-	if (!res->desc)
+	if (!res->desc) {
+		free(temp);
 		return ERR_PTR(-ENOMEM);
+	}
 
 	ret = dev_read_u32_array(dev, of_prop, temp, res->sets);
-	if (ret)
+	if (ret) {
+		free(temp);
 		return ERR_PTR(-EINVAL);
+	}
 
 	for (i = 0; i < res->sets; i++) {
 		resource_subtype = temp[i];
@@ -3119,10 +3126,13 @@ devm_ti_sci_get_of_resource(const struct ti_sci_handle *handle,
 		res->desc[i].res_map =
 			devm_kzalloc(dev, BITS_TO_LONGS(res->desc[i].num) *
 				     sizeof(*res->desc[i].res_map), GFP_KERNEL);
-		if (!res->desc[i].res_map)
+		if (!res->desc[i].res_map) {
+			free(temp);
 			return ERR_PTR(-ENOMEM);
+		}
 	}
 
+	free(temp);
 	if (valid_set)
 		return res;
 
